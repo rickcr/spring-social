@@ -64,15 +64,15 @@ import org.springframework.web.util.WebUtils;
 @RequestMapping("/connect")
 public class ConnectController {
 	
-	private final ConnectionFactoryLocator connectionFactoryLocator;
+	protected final ConnectionFactoryLocator connectionFactoryLocator;
 	
-	private final ConnectionRepository connectionRepository;
+	protected final ConnectionRepository connectionRepository;
 
-	private final MultiValueMap<Class<?>, ConnectInterceptor<?>> interceptors = new LinkedMultiValueMap<Class<?>, ConnectInterceptor<?>>();
+	protected final MultiValueMap<Class<?>, ConnectInterceptor<?>> interceptors = new LinkedMultiValueMap<Class<?>, ConnectInterceptor<?>>();
 
-	private final ConnectSupport webSupport = new ConnectSupport();
+	protected final ConnectSupport webSupport = new ConnectSupport();
 	
-	private final UrlPathHelper urlPathHelper = new UrlPathHelper();
+	protected final UrlPathHelper urlPathHelper = new UrlPathHelper();
 
 	/**
 	 * Constructs a ConnectController.
@@ -257,7 +257,7 @@ public class ConnectController {
 
 	// internal helpers
 
-	private boolean prependServletPath(HttpServletRequest request) {
+	protected boolean prependServletPath(HttpServletRequest request) {
 		return !this.urlPathHelper.getPathWithinServletMapping(request).equals("");
 	}
 	
@@ -266,17 +266,17 @@ public class ConnectController {
 	 * Returns the extension, including the period at the beginning, or an empty string if there is no extension.
 	 * This makes it possible to append the returned value to a path even if there is no extension.
 	 */
-	private String getPathExtension(HttpServletRequest request) {
+	protected String getPathExtension(HttpServletRequest request) {
 		String fileName = WebUtils.extractFullFilenameFromUrlPath(request.getRequestURI());		
 		String extension = StringUtils.getFilenameExtension(fileName);
 		return extension != null ? "." + extension : "";
 	}
 
-	private String getViewPath() {
+	protected String getViewPath() {
 		return "connect/";
 	}
 	
-	private void addConnection(Connection<?> connection, ConnectionFactory<?> connectionFactory, WebRequest request) {
+	protected void addConnection(Connection<?> connection, ConnectionFactory<?> connectionFactory, WebRequest request) {
 		try {
 			connectionRepository.addConnection(connection);
 			postConnect(connectionFactory, connection, request);
@@ -286,20 +286,20 @@ public class ConnectController {
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	private void preConnect(ConnectionFactory<?> connectionFactory, MultiValueMap<String, String> parameters, WebRequest request) {
+	protected void preConnect(ConnectionFactory<?> connectionFactory, MultiValueMap<String, String> parameters, WebRequest request) {
 		for (ConnectInterceptor interceptor : interceptingConnectionsTo(connectionFactory)) {
 			interceptor.preConnect(connectionFactory, parameters, request);
 		}
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	private void postConnect(ConnectionFactory<?> connectionFactory, Connection<?> connection, WebRequest request) {
+	protected void postConnect(ConnectionFactory<?> connectionFactory, Connection<?> connection, WebRequest request) {
 		for (ConnectInterceptor interceptor : interceptingConnectionsTo(connectionFactory)) {
 			interceptor.postConnect(connection, request);
 		}
 	}
 
-	private List<ConnectInterceptor<?>> interceptingConnectionsTo(ConnectionFactory<?> connectionFactory) {
+	protected List<ConnectInterceptor<?>> interceptingConnectionsTo(ConnectionFactory<?> connectionFactory) {
 		Class<?> serviceType = GenericTypeResolver.resolveTypeArgument(connectionFactory.getClass(), ConnectionFactory.class);
 		List<ConnectInterceptor<?>> typedInterceptors = interceptors.get(serviceType);
 		if (typedInterceptors == null) {
@@ -308,7 +308,7 @@ public class ConnectController {
 		return typedInterceptors;
 	}
 	
-	private void processFlash(WebRequest request, Model model) {
+	protected void processFlash(WebRequest request, Model model) {
 		DuplicateConnectionException exception = (DuplicateConnectionException) request.getAttribute(DUPLICATE_CONNECTION_ATTRIBUTE, RequestAttributes.SCOPE_SESSION);
 		if (exception != null) {
 			model.addAttribute(DUPLICATE_CONNECTION_ATTRIBUTE, Boolean.TRUE);
@@ -316,7 +316,7 @@ public class ConnectController {
 		}
 	}
 
-	private void setNoCache(NativeWebRequest request) {
+	protected void setNoCache(NativeWebRequest request) {
 		HttpServletResponse response = request.getNativeResponse(HttpServletResponse.class);
 		if (response != null) {
 			response.setHeader("Pragma", "no-cache");
@@ -326,6 +326,6 @@ public class ConnectController {
 		}
 	}
 
-	private static final String DUPLICATE_CONNECTION_ATTRIBUTE = "social.addConnection.duplicate";
+	protected static final String DUPLICATE_CONNECTION_ATTRIBUTE = "social.addConnection.duplicate";
 
 }
